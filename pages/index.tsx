@@ -1,18 +1,24 @@
-import { NextPage } from 'next';
-import { setLazyProp } from 'next/dist/server/api-utils';
-import { useEffect, useState } from 'react';
+import { GetServerSideProps, NextPage } from 'next';
+import { useState } from 'react';
+import styles from './index.module.css';
 
-const IndexPage: NextPage = () => {
+// getServerSidePropsから渡されるpropsの型
+type Props = {
+  initialImageUrl: string;
+};
+
+// ページコンポーネント関数にpropsを受け取る引数を追加する
+const IndexPage: NextPage<Props> = ({ initialImageUrl }) => {
   //useStateを使って状態を定義する
-  const [imageUrl, setImageUrl] = useState('');
-  const [loading, setLoading] = useState(true);
-  //マウント時に画像を読み込む宣言
-  useEffect(() => {
-    fetchImage().then((newImage) => {
-      setImageUrl(newImage.url);
-      setLoading(false);
-    });
-  }, []);
+  const [imageUrl, setImageUrl] = useState(initialImageUrl);
+  const [loading, setLoading] = useState(false);
+  // マウント時に画像を読み込む（初期画像を取得する）宣言
+  // useEffect(() => {
+  //   fetchImage().then((newImage) => {
+  //     setImageUrl(newImage.url);
+  //     setLoading(false);
+  //   });
+  // }, []);
   //ボタンをクリックした時に画像を読み込む処理
   const handleClick = async () => {
     setLoading(true); //読み込み中フラグを立てる
@@ -22,14 +28,26 @@ const IndexPage: NextPage = () => {
   };
   //ローディング中でなければ、画像を表示する
   return (
-    <div>
-      <button onClick={handleClick}>他のにゃんこも見る</button>
-      <div>{loading || <img src={imageUrl} />}</div>
+    <div className={styles.page}>
+      <button onClick={handleClick} className={styles.button}>
+        他のにゃんこも見る
+      </button>
+      <div className={styles.frame}>{loading || <img src={imageUrl} />}</div>
     </div>
   );
 };
 
 export default IndexPage;
+
+// サーバーサイドで実行する処理
+export const getServerSideProps: GetServerSideProps<Props> = async () => {
+  const image = await fetchImage();
+  return {
+    props: {
+      initialImageUrl: image.url,
+    },
+  };
+};
 
 type Image = {
   url: string;
